@@ -1,4 +1,5 @@
 
+
 import os
 import requests
 from flask import Flask, request, jsonify, send_file
@@ -6,6 +7,7 @@ from moviepy.editor import VideoFileClip
 
 app = Flask(__name__)
 
+# Токен вашого бота з Render Environment Variables
 TELEGRAM_TOKEN = os.environ.get("TELEGRAM_TOKEN")
 
 @app.route('/process-video', methods=['POST'])
@@ -18,7 +20,7 @@ def process_video():
         return jsonify({"error": "No file_id provided"}), 400
 
     try:
-        # Отримуємо шлях до файлу в Telegram
+        # 1. Отримуємо шлях до файлу в Telegram
         file_info = requests.get(f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/getFile?file_id={file_id}").json()
         file_path = file_info['result']['file_path']
         video_url = f"https://api.telegram.org/file/bot{TELEGRAM_TOKEN}/{file_path}"
@@ -26,13 +28,13 @@ def process_video():
         local_input = "input_video.mp4"
         local_output = "output_video.mp4"
         
-        # Завантажуємо відео
+        # 2. Завантажуємо відео
         with requests.get(video_url, stream=True) as r:
             with open(local_input, 'wb') as f:
                 for chunk in r.iter_content(chunk_size=8192):
                     f.write(chunk)
 
-        # Монтаж відео
+        # 3. Монтаж відео
         clip = VideoFileClip(local_input)
         
         if is_shorts:
@@ -51,7 +53,7 @@ def process_video():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-# Цей маршрут виправлено: тепер він збігається з Make
+# Маршрут для завантаження готового відео
 @app.route('/download-video', methods=['GET'])
 def download_file():
     file_path = 'output_video.mp4'
